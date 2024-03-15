@@ -13,6 +13,7 @@ jobs:
     steps:
     - name: Pull Docker image and run
       run: |
+        echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
         docker pull leonsr/docker_royal_test:latest 
         docker stop node_app || true
         docker rm node_app || true
