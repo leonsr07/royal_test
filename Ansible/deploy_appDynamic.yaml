@@ -1,0 +1,84 @@
+---
+- name: Deploy AppDynamics Agent
+  hosts: all
+  become: yes
+  vars:
+    appdynamics_agent_url: "https://download.appdynamics.com/download/prox/download-file"
+    appdynamics_version: "latest"  # You can specify a version here
+    appdynamics_oauth_token: "your_oauth_token_here"
+    appdynamics_controller_info: "CONTROLLERINFO"  # Replace with actual controller host
+    appdynamics_application_name: "APP"  # Replace with actual application name
+
+  tasks:
+    - name: Retrieve OAUTH token
+      uri:
+        url: "https://auth.appdynamics.com/oauth/token"
+        method: POST
+        body: 
+          grant_type: client_credentials
+          client_id: "your_client_id"
+          client_secret: "your_client_secret"
+        body_format: json
+        status_code: 200
+        return_content: yes
+      register: oauth_response
+      no_log: true  # Don't log sensitive information
+
+    - name: Set OAUTH token as a fact
+      set_fact:
+        appdynamics_oauth_token: "{{ oauth_response.json.access_token }}"
+
+    - name: Download the AppDynamics Agent
+      get_url:
+        url: "{{ appdynamics_agent_url }}/machine/{{ appdynamics_version }}/MachineAgent-{{ appdynamics_version }}.zip"
+        dest: "/tmp/MachineAgent.zip"
+        headers:
+          Authorization: "Bearer {{ appdynamics_oauth_token }}"
+      when: appdynamics_oauth_token is defined
+
+    - name: Extract the AppDynamics Agent
+      unarchive:
+        src: "/tmp/MachineAgent.zip"
+        dest: "/opt/AppDynamics/"
+        remote_src: yes
+        creates: "/opt/AppDynamics/MachineAgent"
+
+    - name: Create symlink for MachineAgent
+      file:
+        src: "/opt/AppDynamics/MachineAgent"
+        dest: "/opt/AppDynamics/MachineAgent"
+        state: link
+        force: yes
+
+    - name: Update /conf/controller-info.xml with provided information
+      xml:
+        path: "/opt/AppDynamics/MachineAgent/conf/controller-info.xml"
+        xpath: "/controller-info/controller-host"
+        value: "{{ appdynamics_controller_info }}"
+      notify: restart appdynamics-agent
+
+    - name: Backup current agent files
+      copy:
+        src: "/opt/AppDynamics/MachineAgent"
+        dest: "/opt/AppDynamics/MachineAgent_backup_{{ ansible_date_time.iso8601_basic_short }}"
+        remote_src: yes
+
+    - name: Rollback deployment if necessary
+      command: 'cp -a /opt/AppDynamics/MachineAgent_backup_{{ ansible_date_time.iso8601_basic_short }}/* /opt/AppDynamics/MachineAgent/'
+      when: ansible_failed_task is defined
+
+    - name: Conditionally update controller-info.xml
+      xml:
+        path: "/opt/AppDynamics/MachineAgent/conf/controller-info.xml"
+        xpath: "/controller-info/application-name"
+        value: "{{ appdynamics_application_name }}"
+        set: 
+          - attribute: "application-name"
+            value: "{{ appdynamics_application_name }}"
+      when: "'default_value' in lookup('file', '/opt/AppDynamics/MachineAgent/conf/controller-info.xml')"
+
+  handlers:
+    - name: restart appdynamics-agent
+      service:
+        name: appdynamics-agent
+        state: restarted
