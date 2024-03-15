@@ -16,4 +16,4 @@ jobs:
         docker pull leonsr/docker_royal_test:latest 
         docker stop node_app || true
         docker rm node_app || true
-        docker run -d --name node_app -p 8080:8080 leonsr/docker_royal_test:latest:latest
+        docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest:latest

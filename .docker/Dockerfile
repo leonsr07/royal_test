@@ -4,7 +4,7 @@ WORKDIR /app
 
 ADD ./GH/. ./
 
-EXPOSE 8080
+EXPOSE 3000
 
 RUN npm install
 
