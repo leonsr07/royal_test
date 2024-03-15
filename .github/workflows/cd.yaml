@@ -13,14 +13,14 @@ jobs:
     steps:
     - name: Pull Docker image and run
       run: |
-        if docker ps --format '{{.Names}}' | grep -q "node_app"; then
+        if [ docker ps --format '{{.Names}}' ] | grep -q "node_app"; then
             echo "node_app is running."
             echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
             docker pull leonsr/docker_royal_test:latest 
             docker stop node_app || true
             docker rm node_app || true
-            docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest:latest
+            docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest
         else 
             echo "node_app is not running."
-            docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest:latest
+            docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest
         fi
