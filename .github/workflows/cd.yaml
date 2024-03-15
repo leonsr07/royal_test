@@ -1,0 +1,19 @@
+name: Continuous Deployment
+
+on:
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Pull Docker image and run
+      run: |
+        docker pull leonsr/docker_royal_test:latest 
+        docker stop node_app || true
+        docker rm node_app || true
+        docker run -d --name node_app -p 8080:8080 leonsr/docker_royal_test:latest:latest
