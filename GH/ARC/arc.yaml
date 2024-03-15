@@ -1,0 +1,12 @@
+# runnerdeployment.yaml
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: arc-runner
+  namespace: actions-runner-system
+spec:
+  # This will deploy 1 runners now
+  replicas: 1
+  template:
+    spec:
+      repository: mumoshu/actions-runner-controller-ci
