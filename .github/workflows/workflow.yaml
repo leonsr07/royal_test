@@ -10,29 +10,21 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Trigger Continuous Integration
-      uses: actions/github-script@v5
+      uses: ./.github/workflows/ci.yml
       with:
-        script: |
-          github.actions.createWorkflowDispatch({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'ci.yml',
-            ref: 'main',
-          })
-        github-token: ${{ secrets.PAT }}
+        commitAuthor: ${{ github.actor }}
+        repositoryOwner: ${{ github.repository_owner }}
+        repositoryName: ${{ github.repository }}
+        branchName: ${{ github.ref_name }}
   
   trigger-cd:
     needs: trigger-ci
     runs-on: self-hosted
     steps:
     - name: Trigger Continuous Deployment
-      uses: actions/github-script@v5
+      uses: ./.github/workflows/cd.yml
       with:
-        script: |
-          github.actions.createWorkflowDispatch({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'cd.yml',
-            ref: 'main',
-          })
-        github-token: ${{ secrets.PAT }}
+        commitAuthor: ${{ github.actor }}
+        repositoryOwner: ${{ github.repository_owner }}
+        repositoryName: ${{ github.repository }}
+        branchName: ${{ github.ref_name }}
