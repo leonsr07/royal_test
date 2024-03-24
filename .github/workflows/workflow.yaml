@@ -10,7 +10,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Trigger Continuous Integration
-      uses: ./.github/workflows/ci.yml
+      uses: ./ci.yml
       with:
         commitAuthor: ${{ github.actor }}
         repositoryOwner: ${{ github.repository_owner }}
@@ -22,7 +22,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Trigger Continuous Deployment
-      uses: ./.github/workflows/cd.yml
+      uses: ./cd.yml
       with:
         commitAuthor: ${{ github.actor }}
         repositoryOwner: ${{ github.repository_owner }}
