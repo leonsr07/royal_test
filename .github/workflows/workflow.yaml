@@ -11,24 +11,36 @@ jobs:
     trigger-ci:
         runs-on: self-hosted
         steps:
-            - name: Checkout
+            - name: Checkout code
               uses: actions/checkout@v2
-            - name: Trigger Continuous Integration
-              uses: ./.github/workflows/ci.yml
-              with:
-                    commitAuthor: ${{ github.actor }}
-                    repositoryOwner: ${{ github.repository_owner }}
-                    repositoryName: ${{ github.repository }}
-                    branchName: ${{ github.ref_name }}
+
+            - name: Build Docker image
+              run: |
+                docker build -f .docker/Dockerfile -t leonsr/docker_royal_test:latest -t leonsr/docker_royal_test:${GITHUB_SHA} .
+
+            - name: Push Docker image
+              run: |
+                echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+                docker push leonsr/docker_royal_test:latest
+                docker push leonsr/docker_royal_test:${GITHUB_SHA}
     
     trigger-cd:
         needs: trigger-ci
         runs-on: self-hosted
         steps:
-            - name: Trigger Continuous Deployment
-              uses: ./.github/workflows/cd.yml
-              with:
-                    commitAuthor: ${{ github.actor }}
-                    repositoryOwner: ${{ github.repository_owner }}
-                    repositoryName: ${{ github.repository }}
-                    branchName: ${{ github.ref_name }}
+            - name: Checkout
+              uses: actions/checkout@v2
+        
+            - name: Pull Docker image and run
+              run: |
+                if docker ps --format '{{.Names}}' | grep "node_app"; then
+                    echo "node_app is running."
+                    echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+                    docker pull leonsr/docker_royal_test:latest 
+                    docker stop node_app || true
+                    docker rm node_app || true
+                    docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest
+                else 
+                    echo "node_app is not running."
+                    docker run -d --name node_app -p 3000:3000 leonsr/docker_royal_test:latest
+                fi
