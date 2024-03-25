@@ -1,13 +1,29 @@
 name: Continuous Deployment
 
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      commitAuthor:
+        required: true
+        type: string
+      repositoryOwner:
+        required: true
+        type: string
+      repositoryName:
+        required: true
+        type: string
+      branchName:
+        required: true
+        type: string
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
     - name: Pull Docker image and run
       run: |
         if docker ps --format '{{.Names}}' | grep "node_app"; then
