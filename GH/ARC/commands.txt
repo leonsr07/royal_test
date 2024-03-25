@@ -1,4 +1,22 @@
-kubectl create namespace cert-manager
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
 
+helm repo add jetstack https://charts.jetstack.io --force-update
+helm repo update
 
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.crds.yaml -n cert-manager
+
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.14.4
+
+kubectl create ns actions-runner-system
+kubectl create secret generic controller-manager \
+    -n actions-runner-system \
+    --from-literal=github_token="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"
+
+helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
+helm upgrade --install --namespace actions-runner-system --create-namespace \
+             --wait actions-runner-controller actions-runner-controller/actions-runner-controller
+
+kubectl apply -f arc.yaml

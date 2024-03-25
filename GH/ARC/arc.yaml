@@ -1,12 +1,42 @@
-# runnerdeployment.yaml
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
-  name: arc-runner
+  name: action-runner
   namespace: actions-runner-system
 spec:
-  # This will deploy 1 runners now
   replicas: 1
   template:
+    metadata:
+      labels:
+        app: action-runner
     spec:
-      repository: mumoshu/actions-runner-controller-ci
+      # containers:
+      # - name: runner
+      #   image: quay.io/redhat-actions/runner:latest  # Correct placement of the image field #Not working
+      repository: leonsr07/royal_test
+
+
+---
+
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: actions-runner-autoscaler
+  namespace: actions-runner-system
+spec:
+  # Runners in the targeted RunnerDeployment won't be scaled down
+  # for 2 minutes instead of the default 10 minutes now
+  scaleDownDelaySecondsAfterScaleOut: 120
+  scaleTargetRef:
+    kind: RunnerDeployment
+    # # In case the scale target is RunnerSet:
+    # kind: RunnerSet
+    name: action-runner
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.60'
+    scaleDownThreshold: '0.30'
+    scaleUpFactor: '2'
+    scaleDownFactor: '1'
