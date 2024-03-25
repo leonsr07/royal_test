@@ -13,7 +13,7 @@ helm install \
 kubectl create ns actions-runner-system
 kubectl create secret generic controller-manager \
     -n actions-runner-system \
-    --from-literal=github_token="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"
+    --from-literal=github_token="${GHToken}"
 
 helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
 helm upgrade --install --namespace actions-runner-system --create-namespace \
