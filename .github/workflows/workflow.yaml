@@ -6,25 +6,29 @@ on:
       - main
 
 jobs:
-  trigger-ci:
-    runs-on: self-hosted
-    steps:
-    - name: Trigger Continuous Integration
-      uses: ./ci.yml
-      with:
-        commitAuthor: ${{ github.actor }}
-        repositoryOwner: ${{ github.repository_owner }}
-        repositoryName: ${{ github.repository }}
-        branchName: ${{ github.ref_name }}
+    
   
-  trigger-cd:
-    needs: trigger-ci
-    runs-on: self-hosted
-    steps:
-    - name: Trigger Continuous Deployment
-      uses: ./cd.yml
-      with:
-        commitAuthor: ${{ github.actor }}
-        repositoryOwner: ${{ github.repository_owner }}
-        repositoryName: ${{ github.repository }}
-        branchName: ${{ github.ref_name }}
+    trigger-ci:
+        runs-on: self-hosted
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Trigger Continuous Integration
+              uses: ./.github/workflows/ci.yml
+              with:
+                    commitAuthor: ${{ github.actor }}
+                    repositoryOwner: ${{ github.repository_owner }}
+                    repositoryName: ${{ github.repository }}
+                    branchName: ${{ github.ref_name }}
+    
+    trigger-cd:
+        needs: trigger-ci
+        runs-on: self-hosted
+        steps:
+            - name: Trigger Continuous Deployment
+              uses: ./.github/workflows/cd.yml
+              with:
+                    commitAuthor: ${{ github.actor }}
+                    repositoryOwner: ${{ github.repository_owner }}
+                    repositoryName: ${{ github.repository }}
+                    branchName: ${{ github.ref_name }}
